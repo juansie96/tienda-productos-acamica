@@ -1,9 +1,11 @@
 const express = require('express');
 
+const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 
 const app = express();
 
+const secreto = "soyunafirma123";
 app.use(bodyParser.json());
 
 app.use(bodyParser.urlencoded({
@@ -23,7 +25,7 @@ const arrayUsuarios = [{
     },
     {
         id: 3,
-        nombre: 'Matias',
+        nombre: 'MatiasFili',
         password: '456456456'
     },
     {
@@ -102,6 +104,20 @@ const arrayProductos = [{
 
 app.use(express.static(__dirname + '/public'));
 
+const autenticarUsuario = (req, res, next) => {
+    try {
+        const token = req.headers.authorization;
+        const verificarToken = jwt.verify(token, secreto);
+        if (verificarToken) {
+            req.usuario = verificarToken;
+            return next();
+        }
+    } catch (err) {
+        console.log('Se debe proveer un token');
+    }
+};
+
+
 
 app.get('/', (req, res) => {
     res.sendFile('index.html');
@@ -110,14 +126,38 @@ app.get('/', (req, res) => {
 // CREACION DE USUARIOS
 app.post('/usuarios', (req, res) => {
     const idCrear = parseInt(req.body.id);
-    const usuarioFiltrado = arrayUsuarios.filter(user => user.id === idCrear)
+    const usuarioFiltrado = arrayUsuarios.filter(user => user.id === idCrear);
     if (usuarioFiltrado.length >= 1) {
         res.status(400).send('Lo siento, ID de usuario ya existente.');
     } else {
         arrayUsuarios.push(req.body);
         res.status(200).json(arrayUsuarios);
     }
+});
 
+app.post('/login', (req, res) => {
+    console.log(req.body);
+    const {
+        username,
+        password
+    } = req.body;
+
+    const usuario = arrayUsuarios.find(usuario => {
+        return usuario.nombre == username && usuario.password == password;
+    });
+
+    if (usuario) {
+        const token = jwt.sign({
+            usuario
+        }, secreto);
+        res.json({
+            token
+        });
+    } else {
+        res.json({
+            error: "Usuario incorrecto"
+        });
+    }
 });
 
 
@@ -154,7 +194,7 @@ app.get('/productos/:idUsuario', (req, res) => {
 
 //COMPRAR PRODUCTO
 
-app.delete("/productos/:idProducto", (req, res) => {
+app.delete("/productos/:idProducto", autenticarUsuario, (req, res) => {
     const idProducto = req.params.idProducto;
     const index = arrayProductos.findIndex(
         (producto) => producto.id == idProducto

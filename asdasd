@@ -1,0 +1,51 @@
+const jwt = require("jsonwebtoken");
+const express = require("express");
+const bodyparser = require("body-parser");
+const server = express();
+const secreto = "secreto";
+
+server.use(bodyparser.json());
+
+const validarUsuarioPassword = (user, pass) => {
+  const usuario = "camilo";
+  const password = "camilopassword";
+  if (user === usuario && pass === password) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+server.post("/login", (req, res) => {
+  const { usuario, password } = req.body;
+  const isLogged = validarUsuarioPassword(usuario, password);
+
+  if (isLogged) {
+    const token = jwt.sign({ usuario }, secreto);
+    res.json({ token });
+  } else {
+    res.json({ error: "Usuario incorrecto" });
+    return;
+  }
+});
+
+const autenticarUsuario = (req, res, next) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const verificarToken = jwt.verify(token, secreto);
+    if (verificarToken) {
+      req.usuario = verificarToken;
+      return next();
+    }
+  } catch (err) {
+    res.json({ error: "Error al validar usuario" });
+  }
+  console.log("Verificar token", verificarToken);
+};
+
+server.post("/seguro", autenticarUsuario, (req, res) => {
+  res.send("Estas en una ruta segura");
+  // res.send("Esta pagina es autenticada");
+});
+
+server.listen(3000, () => console.log("Servidor iniciado"));

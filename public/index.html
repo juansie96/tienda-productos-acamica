@@ -69,14 +69,14 @@
     <section id="login" class="">
         <h3>Login</h3>
         <hr>
-        <form >
+        <form onsubmit="handleLogin(username, password)">
             <div class="form-group">
                 <label for="exampleInputEmail1">Usuario</label>
-                <input type="text" class="form-control" >
+                <input type="text" class="form-control" name="username">
             </div>
             <div class="form-group">
                 <label for="exampleInputPassword1">Contraseña</label>
-                <input type="password" class="form-control" id="exampleInputPassword1">
+                <input type="password" class="form-control" id="exampleInputPassword1" name="password">
             </div>
             <button type="submit" class="btn btn-primary">Entrar</button>
         </form>
